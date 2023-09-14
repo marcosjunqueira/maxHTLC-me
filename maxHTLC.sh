@@ -1,7 +1,7 @@
 #!/bin/bash
 # maxHTLC.sh
 # https://github.com/adamporter/maxHTLC-me
-# This bash script uses jq and LND to read and update a lightning node's channels and update the max HTLC value for each to the local balance, minus the local reserve.
+# This bash script uses jq and LND to read a lightning node's channels and update the max HTLC value for each to the local balance, minus the local reserve.
 
 # get the current node's pubkey
 node=$(lncli getinfo | jq -r '. | {alias, identity_pubkey} | @base64')
