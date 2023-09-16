@@ -18,7 +18,7 @@ The script:
 ## Usage
 - Copy the maxHTLC.sh script to your node
 - From the command line, run `bash maxHTLC.sh`
-- Alternatively, you can comment out Line 56 ( `lncli updatechanpolicy...` ) by adding a `#` to the beginning of the line, and uncomment Line 55 ( `echo "lncli updatechanpolicy...` ) by removing the `#` at the beginning of that line to view the output without making any changes.
+- Alternatively, you can comment out Line 63 ( `lncli updatechanpolicy...` ) by adding a `#` to the beginning of the line, and uncomment Line 64 ( `echo "lncli updatechanpolicy...` ) by removing the `#` at the beginning of that line to view the output without making any changes.
 
 ## Responses
 For each channel being updated, there are 2 possible outcomes. If the max HTLC is already set as it should be, a simple `No change required.` message will appear. However, if the max HTLC has been updated, you will get the lncli response of that call written to the screen. The output should be:
