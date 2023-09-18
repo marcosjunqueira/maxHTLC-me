@@ -32,3 +32,10 @@ This indicates that the update was successful and did not fail.
 ## Forthcoming
 - More robust comments
 - A dryrun mode
+
+## Gratitude
+If you find this script useful, you can show your gratitude in 2 ways:
+- Donate to my lightning address: tip@ln.adpo.co
+- Connect your node to [Node Up or Shut Up II](https://amboss.space/c/nodeuporshutup) and Keysend me.
+
+Your thanks is much appreciated and will go toward development of this and other node tools.
