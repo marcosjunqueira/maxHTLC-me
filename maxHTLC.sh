@@ -63,8 +63,7 @@ for row in $(lncli listchannels | jq -r '.channels[] | {channel_point, chan_id, 
         lncli updatechanpolicy --max_htlc_msat $newMaxHTLCMsat --base_fee_msat $feeBaseMsat --fee_rate_ppm $feeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint
 #        echo "lncli updatechanpolicy --max_htlc_msat $newMaxHTLCMsat --base_fee_msat $feeBaseMsat --fee_rate_ppm $feeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint"
     else
-        echo "Max HTLC value still $newMaxHTLCMsat msats."
-        echo "No change required."
+        echo "Max HTLC value still $newMaxHTLCMsat msats. No change required."
     fi
 
     echo "------------------------"
