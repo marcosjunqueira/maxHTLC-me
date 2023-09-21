@@ -3,6 +3,23 @@
 # https://github.com/adamporter/maxHTLC-me
 # This bash script uses jq and LND to read a lightning node's channels and update the max HTLC value for each to the local balance, minus the local reserve.
 
+isDryrun=0
+
+while test $# -gt 0; do
+  case "$1" in
+    -d|--d|-dryrun|--dryrun)
+      isDryrun=1
+      break
+      ;;
+    *)
+      echo "maxHTLC.sh [options]"
+      echo " "
+      echo "options:"
+      echo "-d, --d, -dryrun, --dryrun     run without making any changes"
+      exit 1 ;;
+  esac
+done
+
 # get the current node's pubkey
 node=$(lncli getinfo | jq -r '. | {alias, identity_pubkey} | @base64')
 nodeAlias=$(echo "${node}" | base64 --decode | jq -r '.alias')
@@ -56,14 +73,20 @@ for row in $(lncli listchannels | jq -r '.channels[] | {channel_point, chan_id, 
 
 # call the update command on each channel
     echo "Setting the Max HTLC for $peerAlias :"
+    echo "Current max HTLC in msats: $maxHTLCMsat"
+    echo "New max HTLC in msats:     $newMaxHTLCMsat"
 
     if [ $maxHTLCMsat != $newMaxHTLCMsat ]
     then
-        echo "New max HTLC value: $newMaxHTLCMsat msats."
-        lncli updatechanpolicy --max_htlc_msat $newMaxHTLCMsat --base_fee_msat $feeBaseMsat --fee_rate_ppm $feeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint
-#        echo "lncli updatechanpolicy --max_htlc_msat $newMaxHTLCMsat --base_fee_msat $feeBaseMsat --fee_rate_ppm $feeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint"
+        if [ $isDryrun -eq 1 ]
+        then
+            echo "Update command would be:"
+            echo "lncli updatechanpolicy --max_htlc_msat $newMaxHTLCMsat --base_fee_msat $feeBaseMsat --fee_rate_ppm $feeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint"
+        else
+            lncli updatechanpolicy --max_htlc_msat $newMaxHTLCMsat --base_fee_msat $feeBaseMsat --fee_rate_ppm $feeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint
+        fi
     else
-        echo "Max HTLC value still $newMaxHTLCMsat msats. No change required."
+        echo "Max HTLC values are the same. No change required."
     fi
 
     echo "------------------------"
