@@ -72,9 +72,7 @@ for row in $(lncli listchannels | jq -r '.channels[] | {channel_point, chan_id, 
     fi
 
 # call the update command on each channel
-    echo "Setting the Max HTLC for $peerAlias :"
-    echo "Current max HTLC in msats: $maxHTLCMsat"
-    echo "New max HTLC in msats:     $newMaxHTLCMsat"
+    echo "Checking the Max HTLC for $peerAlias :"
 
     if [ $maxHTLCMsat != $newMaxHTLCMsat ]
     then
@@ -83,10 +81,11 @@ for row in $(lncli listchannels | jq -r '.channels[] | {channel_point, chan_id, 
             echo "Update command would be:"
             echo "lncli updatechanpolicy --max_htlc_msat $newMaxHTLCMsat --base_fee_msat $feeBaseMsat --fee_rate_ppm $feeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint"
         else
+	    "Updating max HTLC value:  $maxHTLCMsat -> $newMaxHTLCMsat"
             lncli updatechanpolicy --max_htlc_msat $newMaxHTLCMsat --base_fee_msat $feeBaseMsat --fee_rate_ppm $feeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint
         fi
     else
-        echo "Max HTLC values are the same. No change required."
+	echo "No HTLC change required: $maxHTLCMsat == $newMaxHTLCMsat"
     fi
 
     echo "------------------------"
