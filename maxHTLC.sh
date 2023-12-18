@@ -57,24 +57,23 @@ for row in $(lncli listchannels | jq -r '.channels[] | {channel_point, chan_id, 
     fi
 
     maxHTLCMsat=$(echo "${channelInformation}" | jq -r '.max_htlc_msat')
-    timeLockDelta=$(echo "${channelInformation}" | jq -r '.time_lock_delta')
+    timeLockDelta=144
+#    timeLockDelta=$(echo "${channelInformation}" | jq -r '.time_lock_delta')
     feeBaseMsat=$(echo "${channelInformation}" | jq -r '.fee_base_msat')
     feeRateMilliMsat=$(echo "${channelInformation}" | jq -r '.fee_rate_milli_msat')
 
 # calculate the new Max HTLC in msats for the current channel
     newMaxHTLCMsat=$((($localBalance-$localReserve)*1000))
 
-# make sure we never set to a negative value
-    if [ $newMaxHTLCMsat -lt 0 ]
-    then
-        $newMaxHTLCMsat=0
-        echo "New max HTLC value would be negative. Setting to zero."
-    fi
-
 # call the update command on each channel
     echo "Checking the Max HTLC for $peerAlias :"
 
-    if [ $maxHTLCMsat != $newMaxHTLCMsat ]
+# make sure we never set to a negative value
+    if [ $newMaxHTLCMsat -lt 0 ]
+    then
+        echo "New max HTLC value would be negative. Setting to zero."
+        lncli updatechanpolicy --max_htlc_msat 0 --base_fee_msat $feeBaseMsat --fee_rate_ppm $feeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint
+     elif [ $maxHTLCMsat != $newMaxHTLCMsat ]
     then
         if [ $isDryrun -eq 1 ]
         then
