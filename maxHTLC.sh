@@ -26,9 +26,7 @@ nodeAlias=$(echo "${node}" | base64 --decode | jq -r '.alias')
 nodePubkey=$(echo "${node}" | base64 --decode | jq -r '.identity_pubkey')
 
 echo "------------------------"
-echo "Adjusting Max HTLCs for Channels of :"
-echo "$nodeAlias :: $nodePubkey"
-echo "------------------------"
+echo "Adjusting Max HTLCs for Channels of : $nodeAlias"
 echo "------------------------"
 
 # can also add ' --public_only' to the listchannels call to limit to public channels
@@ -66,25 +64,24 @@ for row in $(lncli listchannels | jq -r '.channels[] | {channel_point, chan_id, 
     newMaxHTLCMsat=$((($localBalance-$localReserve)*1000))
 
 # call the update command on each channel
-    echo "Checking the Max HTLC for $peerAlias :"
 
 # make sure we never set to a negative value
     if [ $newMaxHTLCMsat -lt 0 ]
     then
-        echo "New max HTLC value would be negative. Setting to zero."
+        echo "New max HTLC value for $peerAlias would be negative. Setting to zero."
         lncli updatechanpolicy --max_htlc_msat 0 --base_fee_msat $feeBaseMsat --fee_rate_ppm $feeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint
      elif [ $maxHTLCMsat != $newMaxHTLCMsat ]
     then
         if [ $isDryrun -eq 1 ]
         then
-            echo "Update command would be:"
+            echo "Update command for $peerAlias would be:"
             echo "lncli updatechanpolicy --max_htlc_msat $newMaxHTLCMsat --base_fee_msat $feeBaseMsat --fee_rate_ppm $feeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint"
         else
-	    echo "Updating max HTLC value: $maxHTLCMsat -> $newMaxHTLCMsat msats"
+	    echo "Updating max HTLC value for $peerAlias : $maxHTLCMsat -> $newMaxHTLCMsat msats"
             lncli updatechanpolicy --max_htlc_msat $newMaxHTLCMsat --base_fee_msat $feeBaseMsat --fee_rate_ppm $feeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint
         fi
     else
-	echo "No HTLC change required: $maxHTLCMsat == $newMaxHTLCMsat msats"
+	echo "Keeping max HTLC for $peerAlias : $maxHTLCMsat == $newMaxHTLCMsat msats"
     fi
 
     echo "------------------------"
