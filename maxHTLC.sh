@@ -4,6 +4,7 @@
 # This bash script uses jq and LND to read a lightning node's channels and update the max HTLC value for each to the local balance, minus the local reserve.
 
 isDryrun=0
+maxFeeRate=100
 
 while test $# -gt 0; do
   case "$1" in
@@ -32,7 +33,7 @@ echo "------------------------"
 echo "------------------------"
 
 # can also add ' --public_only' to the listchannels call to limit to public channels
-for row in $(lncli listchannels | jq -r '.channels[] | {channel_point, chan_id, local_balance, local_chan_reserve_sat, peer_alias} | @base64'); do
+for row in $(lncli listchannels | jq -r '.channels[] | {channel_point, chan_id, local_balance, local_chan_reserve_sat, peer_alias, remote_balance, capacity} | @base64'); do
 #this is a function that we call for initial variable assignments, below
     _jq() {
         echo ${row} | base64 --decode | jq -r ${1}
@@ -44,6 +45,8 @@ for row in $(lncli listchannels | jq -r '.channels[] | {channel_point, chan_id, 
     localBalance=( $(_jq '.local_balance') )
     localReserve=( $(_jq '.local_chan_reserve_sat') )
     peerAlias=( "$(_jq '.peer_alias')" )
+    remoteBalance=( $(_jq '.remote_balance') )
+    capacity=( $(_jq '.capacity') )
 
 # get the current channel's policy information
     channelInformation=$(lncli getchaninfo $channelId | jq -r '.')
@@ -64,6 +67,8 @@ for row in $(lncli listchannels | jq -r '.channels[] | {channel_point, chan_id, 
 
 # calculate the new Max HTLC in msats for the current channel
     newMaxHTLCMsat=$((($localBalance-$localReserve)*1000))
+    newFeeRateMilliMsat=$((($remoteBalance*$maxFeeRate)/$capacity))
+    echo "Checking the new Fee Rate for $peerAlias : $newFeeRateMilliMsat"
 
 # call the update command on each channel
     echo "Checking the Max HTLC for $peerAlias :"
@@ -78,10 +83,11 @@ for row in $(lncli listchannels | jq -r '.channels[] | {channel_point, chan_id, 
         if [ $isDryrun -eq 1 ]
         then
             echo "Update command would be:"
-            echo "lncli updatechanpolicy --max_htlc_msat $newMaxHTLCMsat --base_fee_msat $feeBaseMsat --fee_rate_ppm $feeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint"
+            echo "lncli updatechanpolicy --max_htlc_msat $newMaxHTLCMsat --base_fee_msat $feeBaseMsat --fee_rate_ppm $newFeeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint"
         else
 	    echo "Updating max HTLC value: $maxHTLCMsat -> $newMaxHTLCMsat msats"
-            lncli updatechanpolicy --max_htlc_msat $newMaxHTLCMsat --base_fee_msat $feeBaseMsat --fee_rate_ppm $feeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint
+            echo "Updating fee rate milli msat value: $feeRateMilliMsat -> $newFeeRateMilliMsat msats"
+            lncli updatechanpolicy --max_htlc_msat $newMaxHTLCMsat --base_fee_msat $feeBaseMsat --fee_rate_ppm $newFeeRateMilliMsat --time_lock_delta $timeLockDelta --chan_point $channelPoint
         fi
     else
 	echo "No HTLC change required: $maxHTLCMsat == $newMaxHTLCMsat msats"
